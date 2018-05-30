@@ -5,13 +5,10 @@
 */
 
 
-#include <iostream>
-#include <string>
 
 #include <Windows.h>
 
 #include "vkMath.h"
-
 #include "GameClass.h"
 
 

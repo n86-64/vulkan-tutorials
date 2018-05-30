@@ -20,11 +20,19 @@ public:
 
 private:
 	bool init();
+	void initVulkan();
 
 	// Add vulkan specific stuff here. 
 	void update();
 	void cleanup();
 
 private:
-	GLFWwindow* game_window;
+	GLFWwindow*   game_window;
+
+// Vulkan Stuff
+private:
+	VkInstance    instance = nullptr;
+
+	// Get Vulkan extenstions and add to instance info. 
+	void		  getVkExtenstions(VkInstanceCreateInfo*  instance_data);
 };
