@@ -2,6 +2,9 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="GameClass.cpp">
+      <Filter>Core\Game</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -13,10 +16,16 @@
     <Filter Include="Core\Game">
       <UniqueIdentifier>{242f9d1d-e452-410f-ad5f-c39f0d2b2948}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Helpers">
+      <UniqueIdentifier>{c8e08e7c-01b6-44b5-8cbe-2b7fbec03298}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameClass.h">
       <Filter>Core\Game</Filter>
+    </ClInclude>
+    <ClInclude Include="vkMath.h">
+      <Filter>Core\Helpers</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
