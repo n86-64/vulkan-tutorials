@@ -34,5 +34,15 @@ private:
 	VkInstance    instance = nullptr;
 
 	// Get Vulkan extenstions and add to instance info. 
-	void		  getVkExtenstions(VkInstanceCreateInfo*  instance_data);
+	void		  getGlfwRequiredVkExtenstions(VkInstanceCreateInfo*  instance_data);
+
+	// Debugging
+	void setupValidationLayers(VkInstanceCreateInfo*   instance_data); 
+	void setupDebugCallback();
+	VkResult  CreateDebugReportCallbackEXT(VkInstance instance, 
+		const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, 
+		const VkAllocationCallbacks* pAllocator, 
+		VkDebugReportCallbackEXT* pCallback);
+
+	VkDebugReportCallbackEXT	callback_handle;
 };
