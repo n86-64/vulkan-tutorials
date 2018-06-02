@@ -99,6 +99,11 @@ void VKGame::update()
 void VKGame::cleanup()
 {
 	vkDestroyInstance(instance, nullptr); // Cleans up the vulkan session.
+
+#if _DEBUG
+	DestroyDebugReportCallbackEXT(instance, debug_callback_handle, nullptr);
+#endif
+
 	glfwDestroyWindow(game_window);
 	glfwTerminate();
 }
@@ -138,7 +143,10 @@ void VKGame::setupDebugCallback()
 	debugInfo.flags = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
 	debugInfo.pfnCallback = debugCallbackFunction;
 
-	if(CreateDebugReportCallbackEXT(instance, &debugInfo, nullptr, &callback_handle))
+	if (CreateDebugReportCallbackEXT(instance, &debugInfo, nullptr, &debug_callback_handle) != VK_SUCCESS)
+	{
+		std::runtime_error("Debugging layers did not initialise");
+	}
 }
 
 VkResult VKGame::CreateDebugReportCallbackEXT(VkInstance instance, const VkDebugReportCallbackCreateInfoEXT * pCreateInfo, const VkAllocationCallbacks * pAllocator, VkDebugReportCallbackEXT * pCallback)
@@ -152,5 +160,15 @@ VkResult VKGame::CreateDebugReportCallbackEXT(VkInstance instance, const VkDebug
 	else 
 	{
 		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+void VKGame::DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT callback, const VkAllocationCallbacks * pAllocator)
+{
+	auto func = (PFN_vkDestroyDebugReportCallbackEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugReportCallbackEXT");
+
+	if (func) 
+	{
+		func(instance, callback, pAllocator);
 	}
 }

@@ -43,6 +43,9 @@ private:
 		const VkDebugReportCallbackCreateInfoEXT* pCreateInfo, 
 		const VkAllocationCallbacks* pAllocator, 
 		VkDebugReportCallbackEXT* pCallback);
+	void  DestroyDebugReportCallbackEXT(VkInstance instance,
+		VkDebugReportCallbackEXT callback,
+		const VkAllocationCallbacks* pAllocator);
 
-	VkDebugReportCallbackEXT	callback_handle;
+	VkDebugReportCallbackEXT	debug_callback_handle;
 };
