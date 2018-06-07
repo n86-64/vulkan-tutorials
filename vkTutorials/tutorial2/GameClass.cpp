@@ -133,6 +133,8 @@ void VKGame::setupValidationLayers(VkInstanceCreateInfo* instance_data)
 #if _DEBUG
 	instance_data->enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 	instance_data->ppEnabledLayerNames = validationLayers.data();
+#else 
+	instance_data->embledLayerCount = 0;
 #endif
 }
 
