@@ -19,6 +19,9 @@
     <Filter Include="Core\Helpers">
       <UniqueIdentifier>{c8e08e7c-01b6-44b5-8cbe-2b7fbec03298}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Helpers\Vulkan">
+      <UniqueIdentifier>{014a13c6-0a1a-49ac-b570-831adc083973}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameClass.h">
@@ -26,6 +29,9 @@
     </ClInclude>
     <ClInclude Include="vkMath.h">
       <Filter>Core\Helpers</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanQueueUtilities.h">
+      <Filter>Core\Helpers\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

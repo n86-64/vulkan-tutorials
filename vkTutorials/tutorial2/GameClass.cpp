@@ -3,7 +3,10 @@
 #include <vector>
 
 
+
 #include "GameClass.h"
+
+#include "VulkanQueueUtilities.h"
 
 // Here all of the global variables for vulkan debugging are stored.
 #pragma region VULKAN_GLOBALS
@@ -79,13 +82,15 @@ void VKGame::initVulkan()
 	app_instance_info.pApplicationInfo = &app_info;
 	getGlfwRequiredVkExtenstions(&app_instance_info);
 	setupValidationLayers(&app_instance_info);
-	
+
 	if (vkCreateInstance(&app_instance_info, nullptr, &instance) != VK_SUCCESS) 
 	{
 		throw std::runtime_error("Failed to create the Vulkan Instance");
 	}
 
 	setupDebugCallback();
+	selectPhysicalRenderingDevice();
+	createDevice();
 }
 
 void VKGame::update()
@@ -98,6 +103,7 @@ void VKGame::update()
 
 void VKGame::cleanup()
 {
+	vkDestroyDevice(device, nullptr);
 	vkDestroyInstance(instance, nullptr); // Cleans up the vulkan session.
 
 #if _DEBUG
@@ -109,6 +115,68 @@ void VKGame::cleanup()
 }
 
 // utility functions 
+
+// Here we select the GPU that we want to use and then proceed to utalise it for rendering.
+// We will use this to create our queues which in turn are tied to our command pools.
+void VKGame::selectPhysicalRenderingDevice()
+{
+	uint32_t  deviceCount = 0;
+	vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+
+	std::vector<VkPhysicalDevice> devices(deviceCount);
+	vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+	if (deviceCount == 0)
+	{
+		throw std::runtime_error("Failed to find GPU with Vulkan Support!");
+	}
+
+	// Just select the first GPU/Device for now. 
+	//In future checks should be implimented when selecting devices which are then used for setup to ensure the desired queue families are supported by the GPU.
+	physicalDevice = devices[0];
+}
+
+void VKGame::createDevice()
+{
+	QueueFamilyIndicies compatable_queue_indicies = findCompatableQueueFamilies(physicalDevice);
+
+	if (!compatable_queue_indicies.isComplete())
+	{
+		throw std::runtime_error("Failed to find GPU with Vulkan Support");
+	}
+
+	// Get Device Features
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+
+	VkDeviceQueueCreateInfo     queueCreateInfo = {};
+	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+	queueCreateInfo.queueFamilyIndex = compatable_queue_indicies.graphicsFamily;
+	queueCreateInfo.queueCount = 1;
+
+	float queuePriority = 1.0f;
+	queueCreateInfo.pQueuePriorities = &queuePriority;
+
+	VkDeviceCreateInfo   device_info = {};
+	device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+	device_info.pQueueCreateInfos = &queueCreateInfo;
+	device_info.queueCreateInfoCount = 1;
+
+	device_info.pEnabledFeatures = &deviceFeatures;
+
+#if _DEBUG
+	device_info.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+	device_info.ppEnabledLayerNames = validationLayers.data();
+#else 
+	device_info.embledLayerCount = 0;
+#endif
+
+	if (vkCreateDevice(physicalDevice, &device_info, nullptr, &device) != VK_SUCCESS) 
+	{
+		throw std::runtime_error("failed to create logical device!");
+	}
+
+	vkGetDeviceQueue(device, compatable_queue_indicies.graphicsFamily, 0, &graphics_queue);
+}
 
 void VKGame::getGlfwRequiredVkExtenstions(VkInstanceCreateInfo* instance_data)
 {

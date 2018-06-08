@@ -31,10 +31,23 @@ private:
 
 // Vulkan Stuff
 private:
-	VkInstance    instance = nullptr;
+	VkInstance			instance = VK_NULL_HANDLE;
+
+	VkPhysicalDevice	physicalDevice = VK_NULL_HANDLE;
+	VkDevice			device = VK_NULL_HANDLE;
+
+	// Queues all graphics related commands.
+	VkQueue				graphics_queue = VK_NULL_HANDLE;
+
+
+
+	// Vulkan setup functions
+	void selectPhysicalRenderingDevice();
+	void createDevice();
 
 	// Get Vulkan extenstions and add to instance info. 
 	void		  getGlfwRequiredVkExtenstions(VkInstanceCreateInfo*  instance_data);
+
 
 	// Debugging
 	void setupValidationLayers(VkInstanceCreateInfo*   instance_data); 
