@@ -29,6 +29,10 @@ private:
 private:
 	GLFWwindow*   game_window;
 
+	// Vulkan presentation function.
+	
+
+
 // Vulkan Stuff
 private:
 	VkInstance			instance = VK_NULL_HANDLE;
@@ -38,10 +42,13 @@ private:
 
 	// Queues all graphics related commands.
 	VkQueue				graphics_queue = VK_NULL_HANDLE;
+	VkQueue				present_queue = VK_NULL_HANDLE;
 
+	VkSurfaceKHR		render_surface = VK_NULL_HANDLE;
 
 
 	// Vulkan setup functions
+	void setupRenderingSurface();
 	void selectPhysicalRenderingDevice();
 	void createDevice();
 

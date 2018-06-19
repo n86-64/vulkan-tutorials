@@ -1,6 +1,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <set>
 
 
 
@@ -89,6 +90,7 @@ void VKGame::initVulkan()
 	}
 
 	setupDebugCallback();
+	setupRenderingSurface();
 	selectPhysicalRenderingDevice();
 	createDevice();
 }
@@ -104,6 +106,7 @@ void VKGame::update()
 void VKGame::cleanup()
 {
 	vkDestroyDevice(device, nullptr);
+	vkDestroySurfaceKHR(instance, render_surface, nullptr); // Destroy the render surface.
 	vkDestroyInstance(instance, nullptr); // Cleans up the vulkan session.
 
 #if _DEBUG
@@ -115,6 +118,14 @@ void VKGame::cleanup()
 }
 
 // utility functions 
+
+void VKGame::setupRenderingSurface()
+{
+	if (glfwCreateWindowSurface(instance, game_window, nullptr, &render_surface) != VK_SUCCESS) 
+	{
+		throw std::runtime_error("failed to create a window surface.");
+	}
+}
 
 // Here we select the GPU that we want to use and then proceed to utalise it for rendering.
 // We will use this to create our queues which in turn are tied to our command pools.
@@ -138,29 +149,38 @@ void VKGame::selectPhysicalRenderingDevice()
 
 void VKGame::createDevice()
 {
-	QueueFamilyIndicies compatable_queue_indicies = findCompatableQueueFamilies(physicalDevice);
+	QueueFamilyIndicies compatable_queue_indicies = findCompatableQueueFamilies(physicalDevice, &render_surface);
 
 	if (!compatable_queue_indicies.isComplete())
 	{
 		throw std::runtime_error("Failed to find GPU with Vulkan Support");
 	}
 
+	std::vector<VkDeviceQueueCreateInfo>  queueCreationObjects;
+	std::set<int>  uniqueQueueFamilies = { compatable_queue_indicies.graphicsFamily,  compatable_queue_indicies.presentFamily };
+
+
+	// Setup the multiple queues for performing graphics operations and drawing.
+	float queuePriority = 1.0f;
+	for (int queueFamily : uniqueQueueFamilies) 
+	{
+		VkDeviceQueueCreateInfo     queueCreateInfo = {};
+		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+		queueCreateInfo.queueFamilyIndex = queueFamily;
+		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreationObjects.push_back(queueCreateInfo);
+	}
+
+	// Setup the device object which is what we use to render the queues.
+	
 	// Get Device Features
 	VkPhysicalDeviceFeatures deviceFeatures = {};
 
-	VkDeviceQueueCreateInfo     queueCreateInfo = {};
-	queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queueCreateInfo.queueFamilyIndex = compatable_queue_indicies.graphicsFamily;
-	queueCreateInfo.queueCount = 1;
-
-	float queuePriority = 1.0f;
-	queueCreateInfo.pQueuePriorities = &queuePriority;
-
 	VkDeviceCreateInfo   device_info = {};
 	device_info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-	device_info.pQueueCreateInfos = &queueCreateInfo;
-	device_info.queueCreateInfoCount = 1;
-
+	device_info.queueCreateInfoCount = static_cast<uint32_t>(queueCreationObjects.size());
+	device_info.pQueueCreateInfos = queueCreationObjects.data();
 	device_info.pEnabledFeatures = &deviceFeatures;
 
 #if _DEBUG
@@ -176,6 +196,7 @@ void VKGame::createDevice()
 	}
 
 	vkGetDeviceQueue(device, compatable_queue_indicies.graphicsFamily, 0, &graphics_queue);
+	vkGetDeviceQueue(device, compatable_queue_indicies.presentFamily, 0, &present_queue);
 }
 
 void VKGame::getGlfwRequiredVkExtenstions(VkInstanceCreateInfo* instance_data)
