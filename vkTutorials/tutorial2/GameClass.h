@@ -50,6 +50,7 @@ private:
 	// Vulkan setup functions
 	void setupRenderingSurface();
 	void selectPhysicalRenderingDevice();
+	void createSwapChain();
 	void createDevice();
 
 	// Get Vulkan extenstions and add to instance info. 

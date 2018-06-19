@@ -7,7 +7,7 @@
 
 #include "GameClass.h"
 
-#include "VulkanQueueUtilities.h"
+#include "VulkanUtilities.h"
 
 // Here all of the global variables for vulkan debugging are stored.
 #pragma region VULKAN_GLOBALS
@@ -17,6 +17,15 @@
 std::vector<const char*> validationLayers =
 {
 	"VK_LAYER_LUNARG_standard_validation"
+};
+#pragma endregion
+
+// Here we store the series of extenstions that we need to enable for making games. 
+// This inclues core components such as the swapchain. 
+#pragma region VULKAN_EXTENSTIONS
+std::vector<const char*> device_extenstions
+{
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 #pragma endregion
 
@@ -93,6 +102,7 @@ void VKGame::initVulkan()
 	setupRenderingSurface();
 	selectPhysicalRenderingDevice();
 	createDevice();
+	createSwapChain();
 }
 
 void VKGame::update()
@@ -147,6 +157,15 @@ void VKGame::selectPhysicalRenderingDevice()
 	physicalDevice = devices[0];
 }
 
+// Decide the swap chain settings and setup the swapchain mechanism. 
+void VKGame::createSwapChain()
+{
+	SwapChainSupportDetails  swapchain_details = querySwapChainSupport(physicalDevice, &render_surface);
+
+	
+
+}
+
 void VKGame::createDevice()
 {
 	QueueFamilyIndicies compatable_queue_indicies = findCompatableQueueFamilies(physicalDevice, &render_surface);
@@ -182,6 +201,8 @@ void VKGame::createDevice()
 	device_info.queueCreateInfoCount = static_cast<uint32_t>(queueCreationObjects.size());
 	device_info.pQueueCreateInfos = queueCreationObjects.data();
 	device_info.pEnabledFeatures = &deviceFeatures;
+	device_info.enabledExtensionCount = static_cast<uint32_t>(device_extenstions.size());
+	device_info.ppEnabledExtensionNames = device_extenstions.data();
 
 #if _DEBUG
 	device_info.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());

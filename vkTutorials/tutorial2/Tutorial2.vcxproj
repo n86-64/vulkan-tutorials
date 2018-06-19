@@ -133,7 +133,7 @@
   <ItemGroup>
     <ClInclude Include="GameClass.h" />
     <ClInclude Include="vkMath.h" />
-    <ClInclude Include="VulkanQueueUtilities.h" />
+    <ClInclude Include="VulkanUtilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

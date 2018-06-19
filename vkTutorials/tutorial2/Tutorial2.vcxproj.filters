@@ -30,7 +30,7 @@
     <ClInclude Include="vkMath.h">
       <Filter>Core\Helpers</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanQueueUtilities.h">
+    <ClInclude Include="VulkanUtilities.h">
       <Filter>Core\Helpers\Vulkan</Filter>
     </ClInclude>
   </ItemGroup>
