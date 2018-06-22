@@ -55,13 +55,17 @@ private:
 	VkSurfaceFormatKHR  swapchain_format = {};
 	VkPresentModeKHR	swapchain_present_mode = {};
 	VkExtent2D			swapchain_image_resolution = {};
+	VkFormat			swapchain_image_format = {};
 	std::vector<VkImage> swapchain_images;
+
+	std::vector<VkImageView>			swapchain_image_view;
 
 
 	// Vulkan setup functions
 	void setupRenderingSurface();
 	void selectPhysicalRenderingDevice();
 	void createSwapChain();
+	void createImageViews();
 	void createDevice();
 
 	// Get Vulkan extenstions and add to instance info. 

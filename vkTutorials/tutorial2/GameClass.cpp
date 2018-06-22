@@ -114,11 +114,24 @@ void VKGame::update()
 	while (!glfwWindowShouldClose(game_window)) 
 	{
 		glfwPollEvents();
+
+		int state = glfwGetKey(game_window, GLFW_KEY_ESCAPE);
+		
+		// Kill the loop.
+		if (state == GLFW_PRESS) 
+		{
+			glfwSetWindowShouldClose(game_window, true);
+		}
 	}
 }
 
 void VKGame::cleanup()
 {
+	for (auto imageView : swapchain_image_view) 
+	{
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+
 	vkDestroySwapchainKHR(device, swapchain, nullptr); 
 	vkDestroyDevice(device, nullptr);
 	vkDestroySurfaceKHR(instance, render_surface, nullptr); // Destroy the render surface.
@@ -218,6 +231,38 @@ void VKGame::createSwapChain()
 	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, nullptr);
 	swapchain_images.resize(imageCount);
 	vkGetSwapchainImagesKHR(device, swapchain, &imageCount, swapchain_images.data());
+
+	createImageViews(); // Create Samplers for the render targets.
+}
+
+void VKGame::createImageViews()
+{
+	swapchain_image_view.resize(swapchain_images.size());
+
+	for (size_t i = 0; i < swapchain_image_view.size(); i++) 
+	{
+		VkImageViewCreateInfo image_view_setup = {};
+		image_view_setup.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		image_view_setup.image = swapchain_images[i];
+		image_view_setup.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		image_view_setup.format = swapchain_image_format;
+
+		image_view_setup.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_setup.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+	    image_view_setup.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		image_view_setup.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		image_view_setup.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		image_view_setup.subresourceRange.baseMipLevel = 0;
+		image_view_setup.subresourceRange.levelCount = 1;
+		image_view_setup.subresourceRange.baseArrayLayer = 0;
+		image_view_setup.subresourceRange.layerCount = 1;
+
+		if (vkCreateImageView(device, &image_view_setup, nullptr, &swapchain_image_view[i]) != VK_SUCCESS) 
+		{
+			throw std::runtime_error("failed to create image views!");
+		}
+	}
 }
 
 void VKGame::createDevice()
@@ -274,6 +319,7 @@ void VKGame::createDevice()
 	vkGetDeviceQueue(device, compatable_queue_indicies.presentFamily, 0, &present_queue);
 }
 
+// TODO - Remove this function.
 void VKGame::getGlfwRequiredVkExtenstions(VkInstanceCreateInfo* instance_data)
 {
 	uint32_t glfwExtensionCount = 0;
@@ -317,6 +363,7 @@ std::vector<const char*> VKGame::getRequiredVkExtenstions()
 void VKGame::setSwapchainFormat(SwapChainSupportDetails details)
 {
 	swapchain_format = { VK_FORMAT_R8G8B8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR };
+	swapchain_image_format = swapchain_format.format;
 }
 
 void VKGame::setSwapchainMode(SwapChainSupportDetails details)
