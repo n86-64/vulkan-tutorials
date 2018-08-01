@@ -8,7 +8,6 @@
 
 using vkInt = uint32_t;
 
-
 constexpr int NO_COMPATABLE_QUEUE_FOUND = -1;
 
 struct QueueFamilyIndicies 

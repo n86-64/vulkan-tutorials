@@ -22,6 +22,9 @@
     <Filter Include="Core\Helpers\Vulkan">
       <UniqueIdentifier>{014a13c6-0a1a-49ac-b570-831adc083973}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core\Helpers\FileIO">
+      <UniqueIdentifier>{55b0e5ac-f807-4af6-93e3-bb5dc6424ea7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameClass.h">
@@ -32,6 +35,9 @@
     </ClInclude>
     <ClInclude Include="VulkanUtilities.h">
       <Filter>Core\Helpers\Vulkan</Filter>
+    </ClInclude>
+    <ClInclude Include="FileIO.h">
+      <Filter>Core\Helpers\FileIO</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

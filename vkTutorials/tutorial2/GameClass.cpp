@@ -3,6 +3,8 @@
 #include <vector>
 #include <set>
 
+#include "FileIO.h"
+
 
 
 #include "GameClass.h"
@@ -107,6 +109,7 @@ void VKGame::initVulkan()
 	selectPhysicalRenderingDevice();
 	createDevice();
 	createSwapChain();
+	createGraphicsPipeline();
 }
 
 void VKGame::update()
@@ -389,6 +392,19 @@ void VKGame::setSwapchainMode(SwapChainSupportDetails details)
 void VKGame::setSwapchainViewport(SwapChainSupportDetails details)
 {
 	swapchain_image_resolution = { 1920, 1080 };
+}
+
+void VKGame::createShaderModule()
+{
+	auto vertShaderCode = readFile("vert.spv");
+	auto fragShaderCode = readFile("frag.spv");
+
+
+}
+
+void VKGame::createGraphicsPipeline()
+{
+	createShaderModule();
 }
 
 // Set up Vulkan validation layers for debug messages and error checking. 

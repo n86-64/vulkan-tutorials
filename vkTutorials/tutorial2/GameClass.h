@@ -67,6 +67,7 @@ private:
 	void createSwapChain();
 	void createImageViews();
 	void createDevice();
+	void createGraphicsPipeline();
 
 	// Get Vulkan extenstions and add to instance info. 
 	void		  getGlfwRequiredVkExtenstions(VkInstanceCreateInfo*  instance_data);
@@ -76,6 +77,13 @@ private:
 	void setSwapchainFormat(SwapChainSupportDetails  details);
 	void setSwapchainMode(SwapChainSupportDetails  details);
 	void setSwapchainViewport(SwapChainSupportDetails  details);
+
+
+	// Shader Module functions
+	void createShaderModule();
+
+
+	// Pipeline Creation checks.
 
 
 	// Debugging
