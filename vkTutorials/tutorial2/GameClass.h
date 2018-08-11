@@ -60,6 +60,9 @@ private:
 
 	std::vector<VkImageView>			swapchain_image_view;
 
+	VkRenderPass		render_pass;
+	VkPipelineLayout	pipeline_layout;
+	VkPipeline			graphics_pipeline;
 
 	// Vulkan setup functions
 	void setupRenderingSurface();
@@ -67,6 +70,7 @@ private:
 	void createSwapChain();
 	void createImageViews();
 	void createDevice();
+	void createRenderPass();
 	void createGraphicsPipeline();
 
 	// Get Vulkan extenstions and add to instance info. 
@@ -78,12 +82,19 @@ private:
 	void setSwapchainMode(SwapChainSupportDetails  details);
 	void setSwapchainViewport(SwapChainSupportDetails  details);
 
-
 	// Shader Module functions
-	void createShaderModule();
+	void createShaders();
+	VkShaderModule createShaderModule(const std::vector<char>& code);
+
+	// Graphics Pipeline Creation
 
 
 	// Pipeline Creation checks.
+
+
+	// Shader Modules
+	VkShaderModule  vertShaderModule;
+	VkShaderModule  fragShaderModule;
 
 
 	// Debugging
