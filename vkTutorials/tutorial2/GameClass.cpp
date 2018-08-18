@@ -472,7 +472,11 @@ VkShaderModule VKGame::createShaderModule(const std::vector<char>& code)
 // Create the rendering pipeline which will recieve input and then output images accordignly.
 void VKGame::createGraphicsPipeline()
 {
-	createShaders();
+	auto vertShaderCode = readFile("vert.spv");
+	auto fragShaderCode = readFile("frag.spv");
+
+	vertShaderModule = createShaderModule(vertShaderCode);
+	fragShaderModule = createShaderModule(fragShaderCode);
 
 	VkPipelineShaderStageCreateInfo  vertShaderStageCreateInfo = {};
 	vertShaderStageCreateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -512,7 +516,7 @@ void VKGame::createGraphicsPipeline()
 	scissor.offset = { 0, 0 };
 	scissor.extent = swapchain_image_resolution;
 
-	VkPipelineViewportStateCreateInfo viewportState;
+	VkPipelineViewportStateCreateInfo viewportState = {};
 	viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
 	viewportState.viewportCount = 1;
 	viewportState.pViewports = &viewport;
@@ -577,13 +581,39 @@ void VKGame::createGraphicsPipeline()
 
 	pipelineCreateInfo.layout = pipeline_layout;
 	pipelineCreateInfo.renderPass = render_pass;
+
 	pipelineCreateInfo.subpass = 0;
+	pipelineCreateInfo.basePipelineHandle = VK_NULL_HANDLE;
+
 
 	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &graphics_pipeline) != VK_SUCCESS) 
 	{
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
+}
+
+void VKGame::createFramebufferObjects()
+{
+	swapchain_frame_buffers.resize(swapchain_image_view.size());
+
+	for (size_t i = 0; i < swapchain_image_view.size(); i++) 
+	{
+		VkFramebufferCreateInfo frameBufferInfo = {};
+		frameBufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		frameBufferInfo.renderPass = render_pass;
+		frameBufferInfo.attachmentCount = 1;
+		frameBufferInfo.pAttachments = &swapchain_image_view[i];
+		frameBufferInfo.width = swapchain_image_resolution.width;
+		frameBufferInfo.height = swapchain_image_resolution.height;
+		frameBufferInfo.layers = 1;
+
+		if (vkCreateFramebuffer(device, &frameBufferInfo, nullptr, &swapchain_frame_buffers[i]) != VK_SUCCESS) 
+		{
+			throw std::runtime_error("Error failed to create Framebuffer objects");
+		}
+
+	}
 }
 
 // Set up Vulkan validation layers for debug messages and error checking. 

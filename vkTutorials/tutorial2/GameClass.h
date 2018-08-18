@@ -59,10 +59,11 @@ private:
 	std::vector<VkImage> swapchain_images;
 
 	std::vector<VkImageView>			swapchain_image_view;
+	std::vector<VkFramebuffer>			swapchain_frame_buffer;
 
-	VkRenderPass		render_pass;
-	VkPipelineLayout	pipeline_layout;
-	VkPipeline			graphics_pipeline;
+	VkRenderPass		render_pass = VK_NULL_HANDLE;
+	VkPipelineLayout	pipeline_layout = VK_NULL_HANDLE;
+	VkPipeline			graphics_pipeline = VK_NULL_HANDLE;
 
 	// Vulkan setup functions
 	void setupRenderingSurface();
@@ -72,6 +73,7 @@ private:
 	void createDevice();
 	void createRenderPass();
 	void createGraphicsPipeline();
+	void createFramebufferObjects();
 
 	// Get Vulkan extenstions and add to instance info. 
 	void		  getGlfwRequiredVkExtenstions(VkInstanceCreateInfo*  instance_data);
