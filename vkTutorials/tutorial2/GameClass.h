@@ -31,6 +31,7 @@ private:
 
 	// Add vulkan specific stuff here. 
 	void update();
+	void drawFrame();
 	void cleanup();
 
 private:
@@ -68,6 +69,10 @@ private:
 	VkCommandPool					command_pool;
 	std::vector<VkCommandBuffer>	command_buffers;
 
+	// semaphores to syncronise command buffer submission.
+	VkSemaphore						image_available_semaphore;
+	VkSemaphore						render_finished_semaphore;
+
 	// Vulkan setup functions
 	void setupRenderingSurface();
 	void selectPhysicalRenderingDevice();
@@ -79,6 +84,8 @@ private:
 	void createFramebufferObjects();
 	void createCommandPool();
 	void createCommandBuffers();
+	void createSemaphores();
+
 
 	// Get Vulkan extenstions and add to instance info. 
 	void		  getGlfwRequiredVkExtenstions(VkInstanceCreateInfo*  instance_data);

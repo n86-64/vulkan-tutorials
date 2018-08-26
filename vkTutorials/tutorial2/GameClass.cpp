@@ -91,7 +91,6 @@ void VKGame::initVulkan()
 	VkInstanceCreateInfo app_instance_info = {};
 	app_instance_info.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	app_instance_info.pApplicationInfo = &app_info;
-	// getGlfwRequiredVkExtenstions(&app_instance_info);
 
 	auto extenstions = getRequiredVkExtenstions();
 	app_instance_info.enabledExtensionCount = static_cast<vkInt>(extenstions.size());
@@ -99,7 +98,9 @@ void VKGame::initVulkan()
 
 	setupValidationLayers(&app_instance_info);
 
-	if (vkCreateInstance(&app_instance_info, nullptr, &instance) != VK_SUCCESS) 
+	VkResult result = vkCreateInstance(&app_instance_info, nullptr, &instance);
+
+	if (result != VK_SUCCESS) 
 	{
 		throw std::runtime_error("Failed to create the Vulkan Instance");
 	}
@@ -114,6 +115,7 @@ void VKGame::initVulkan()
 	createFramebufferObjects();
 	createCommandPool();
 	createCommandBuffers();
+	createSemaphores();
 }
 
 void VKGame::update()
@@ -129,12 +131,72 @@ void VKGame::update()
 		{
 			glfwSetWindowShouldClose(game_window, true);
 		}
+
+		drawFrame();
 	}
 	
+	vkDeviceWaitIdle(device);
+}
+
+void VKGame::drawFrame()
+{
+	VkResult  res;
+
+	uint32_t imageIndex;
+	res = vkAcquireNextImageKHR(device, swapchain, std::numeric_limits<uint64_t>::max(), image_available_semaphore, VK_NULL_HANDLE, &imageIndex);
+
+	if (res != VK_SUCCESS) 
+	{
+		throw std::runtime_error("Error failed to aquire the next image from the swapchain.");
+	}
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { image_available_semaphore };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+	// This teels the system what semaphore/mutex to check for before executing the command buffer.
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &command_buffers[imageIndex];
+	
+	VkSemaphore signalSemaphores[] = { render_finished_semaphore };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	if (vkQueueSubmit(graphics_queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) 
+	{
+		throw std::runtime_error("Error cannot submit command buffers to the queue.");
+	}
+
+	VkPresentInfoKHR  presentInfo = {};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR  swapChains[] = { swapchain };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapChains;
+	presentInfo.pImageIndices = &imageIndex;
+
+	res = vkQueuePresentKHR(present_queue, &presentInfo);
+
+	if (res != VK_SUCCESS) // Currently submission of a present request causes this to break. // Unesure why, possibly something to do with command queue setup.
+	{
+		throw std::runtime_error("Error failed to present.");
+	}
 }
 
 void VKGame::cleanup()
 {
+	vkDestroySemaphore(device, render_finished_semaphore, nullptr);
+	vkDestroySemaphore(device, image_available_semaphore, nullptr);
+
 	vkDestroyCommandPool(device, command_pool, nullptr);
 
 	for (auto framebuffer : swapchain_frame_buffers) 
@@ -237,6 +299,8 @@ void VKGame::createSwapChain()
 	else 
 	{
 		swapchain_setup_info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		swapchain_setup_info.queueFamilyIndexCount = 0;
+		swapchain_setup_info.pQueueFamilyIndices = nullptr;
 	}
 
 	swapchain_setup_info.preTransform = swapchain_details.capibilities.currentTransform;
@@ -373,6 +437,15 @@ void VKGame::createRenderPass()
 	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
+	
+	VkSubpassDependency  dependency = {};
+	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+	dependency.dstSubpass = 0;
+	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependency.srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+	renderPassInfo.dependencyCount = 1;
+	renderPassInfo.pDependencies = &dependency;
 
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &render_pass) != VK_SUCCESS) 
 	{
@@ -449,7 +522,11 @@ void VKGame::setSwapchainMode(SwapChainSupportDetails details)
 
 void VKGame::setSwapchainViewport(SwapChainSupportDetails details)
 {
-	swapchain_image_resolution = { 1920, 1080 };
+	int width = 0;
+	int height = 0;
+	glfwGetWindowSize(game_window, &width, &height);
+
+	swapchain_image_resolution = { (uint32_t)width, (uint32_t)height };
 }
 
 void VKGame::createShaders()
@@ -628,7 +705,7 @@ void VKGame::createFramebufferObjects()
 
 void VKGame::createCommandPool()
 {
-	QueueFamilyIndicies  queueFamilyIndicies = findCompatableQueueFamilies(physicalDevice,&render_surface);
+	QueueFamilyIndicies  queueFamilyIndicies = findCompatableQueueFamilies(physicalDevice, &render_surface);
 	
 	VkCommandPoolCreateInfo com_pool_info = {};
 	com_pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -695,6 +772,20 @@ void VKGame::createCommandBuffers()
 			throw std::runtime_error("failed to record command buffer!");
 		}
 	}
+}
+
+void VKGame::createSemaphores()
+{
+	VkSemaphoreCreateInfo    semaphoreInfo = {};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &image_available_semaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &render_finished_semaphore) != VK_SUCCESS
+		) 
+	{
+		throw std::runtime_error("Error failed to create semaphores.");
+	}
+
 }
 
 // Set up Vulkan validation layers for debug messages and error checking. 
