@@ -39,6 +39,9 @@ private:
 
 // Vulkan Stuff
 private:
+
+	const int MAX_FRAMES_IN_FLIGHT = 2;
+
 	VkInstance			instance = VK_NULL_HANDLE;
 
 	VkPhysicalDevice	physicalDevice = VK_NULL_HANDLE;

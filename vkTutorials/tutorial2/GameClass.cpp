@@ -132,7 +132,12 @@ void VKGame::update()
 			glfwSetWindowShouldClose(game_window, true);
 		}
 
-		drawFrame();
+		if (!glfwGetWindowAttrib(game_window, GLFW_ICONIFIED)) 
+		{
+			// Temporary fix to allow for minimizing of the windows. Causes a crash because minimizing reduces the size of the render surface to {0, 0}.
+			// In future a function should be called to allow for resizing of the window. 
+			drawFrame();
+		}
 	}
 	
 	vkDeviceWaitIdle(device);
@@ -522,6 +527,7 @@ void VKGame::setSwapchainMode(SwapChainSupportDetails details)
 
 void VKGame::setSwapchainViewport(SwapChainSupportDetails details)
 {
+	// NOTE - VIEWPORT\RENDER SURFACE AND SWAPCHAIN MUST MATCH ELSE THE RENDERPASS DATA WILL BE OUT OF DATE.
 	int width = 0;
 	int height = 0;
 	glfwGetWindowSize(game_window, &width, &height);
