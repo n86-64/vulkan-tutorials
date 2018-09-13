@@ -73,8 +73,10 @@ private:
 	std::vector<VkCommandBuffer>	command_buffers;
 
 	// semaphores to syncronise command buffer submission.
-	VkSemaphore						image_available_semaphore;
-	VkSemaphore						render_finished_semaphore;
+	std::vector<VkSemaphore>						image_available_semaphore;
+	std::vector<VkSemaphore>						render_finished_semaphore;
+	std::vector<VkFence>							inFlight_Fences;
+	size_t											current_frame = 0;
 
 	// Vulkan setup functions
 	void setupRenderingSurface();
@@ -87,7 +89,7 @@ private:
 	void createFramebufferObjects();
 	void createCommandPool();
 	void createCommandBuffers();
-	void createSemaphores();
+	void createSyncObjects();
 
 
 	// Get Vulkan extenstions and add to instance info. 

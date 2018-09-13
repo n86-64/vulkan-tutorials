@@ -115,7 +115,7 @@ void VKGame::initVulkan()
 	createFramebufferObjects();
 	createCommandPool();
 	createCommandBuffers();
-	createSemaphores();
+	createSyncObjects();
 }
 
 void VKGame::update()
@@ -140,15 +140,19 @@ void VKGame::update()
 		}
 	}
 	
-	vkDeviceWaitIdle(device);
+	// vkDeviceWaitIdle(device);
 }
 
 void VKGame::drawFrame()
 {
+	// Wait for the perticular frame to be drawn before starting work on the frame. Allows for two frames to be drawn at the same time.
+	vkWaitForFences(device, 1, &inFlight_Fences[current_frame], VK_TRUE, std::numeric_limits<uint64_t>::max());
+	vkResetFences(device, 1, &inFlight_Fences[current_frame]);
+
 	VkResult  res;
 
 	uint32_t imageIndex;
-	res = vkAcquireNextImageKHR(device, swapchain, std::numeric_limits<uint64_t>::max(), image_available_semaphore, VK_NULL_HANDLE, &imageIndex);
+	res = vkAcquireNextImageKHR(device, swapchain, std::numeric_limits<uint64_t>::max(), image_available_semaphore[current_frame], VK_NULL_HANDLE, &imageIndex);
 
 	if (res != VK_SUCCESS) 
 	{
@@ -158,7 +162,7 @@ void VKGame::drawFrame()
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { image_available_semaphore };
+	VkSemaphore waitSemaphores[] = { image_available_semaphore[current_frame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
 	// This teels the system what semaphore/mutex to check for before executing the command buffer.
@@ -169,11 +173,11 @@ void VKGame::drawFrame()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &command_buffers[imageIndex];
 	
-	VkSemaphore signalSemaphores[] = { render_finished_semaphore };
+	VkSemaphore signalSemaphores[] = { render_finished_semaphore[current_frame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(graphics_queue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) 
+	if (vkQueueSubmit(graphics_queue, 1, &submitInfo, inFlight_Fences[current_frame]) != VK_SUCCESS) 
 	{
 		throw std::runtime_error("Error cannot submit command buffers to the queue.");
 	}
@@ -195,12 +199,18 @@ void VKGame::drawFrame()
 	{
 		throw std::runtime_error("Error failed to present.");
 	}
+
+	current_frame = (current_frame + 1) % MAX_FRAMES_IN_FLIGHT; // Loop through drawing each frame each tick.
 }
 
 void VKGame::cleanup()
 {
-	vkDestroySemaphore(device, render_finished_semaphore, nullptr);
-	vkDestroySemaphore(device, image_available_semaphore, nullptr);
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
+	{
+		vkDestroySemaphore(device, render_finished_semaphore[i], nullptr);
+		vkDestroySemaphore(device, image_available_semaphore[i], nullptr);
+		vkDestroyFence(device, inFlight_Fences[i], nullptr);
+	}
 
 	vkDestroyCommandPool(device, command_pool, nullptr);
 
@@ -780,16 +790,28 @@ void VKGame::createCommandBuffers()
 	}
 }
 
-void VKGame::createSemaphores()
+void VKGame::createSyncObjects()
 {
+	image_available_semaphore.resize(MAX_FRAMES_IN_FLIGHT);
+	render_finished_semaphore.resize(MAX_FRAMES_IN_FLIGHT);
+	inFlight_Fences.resize(MAX_FRAMES_IN_FLIGHT);
+
 	VkSemaphoreCreateInfo    semaphoreInfo = {};
 	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &image_available_semaphore) != VK_SUCCESS ||
-		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &render_finished_semaphore) != VK_SUCCESS
-		) 
+	VkFenceCreateInfo   fenceCreateInfo = {};
+	fenceCreateInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) 
 	{
-		throw std::runtime_error("Error failed to create semaphores.");
+		if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &image_available_semaphore[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &render_finished_semaphore[i]) != VK_SUCCESS ||
+			vkCreateFence(device, &fenceCreateInfo, nullptr, &inFlight_Fences[i]) != VK_SUCCESS
+			)
+		{
+			throw std::runtime_error("Error failed to create semaphores.");
+		}
 	}
 
 }
